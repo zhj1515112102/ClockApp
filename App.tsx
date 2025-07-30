@@ -6,7 +6,21 @@
  */
 
 import { NewAppScreen } from '@react-native/new-app-screen';
-import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
+import {
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  useColorScheme,
+  View,
+} from 'react-native';
+import Home from './pages/Home';
+
+const statusBarHeightOffset = Platform.select({
+  android: StatusBar.currentHeight || 0,
+  default: 0,
+});
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -14,7 +28,10 @@ function App() {
   return (
     <View style={styles.container}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <NewAppScreen templateFileName="App.tsx" />
+      <View style={[styles.container, { paddingTop: statusBarHeightOffset }]}>
+        <Home />
+      </View>
+      {/* <NewAppScreen templateFileName="App.tsx" /> */}
     </View>
   );
 }
