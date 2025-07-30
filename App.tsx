@@ -29,6 +29,7 @@ const statusBarHeightOffset = Platform.select({
 const Tab = createBottomTabNavigator();
 
 function App() {
+  //
   const isDarkMode = useColorScheme() === 'dark';
 
   return (
