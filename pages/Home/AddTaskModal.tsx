@@ -10,31 +10,21 @@ import {
   Keyboard,
 } from 'react-native';
 
-type Task = {
-  id: string;
-  name: string;
-  createdAt: string;
-};
+interface AddTaskModalProps {
+  setModalVisible: React.Dispatch<React.SetStateAction<boolean>>;
+  clickAdd: (taskName: string) => void;
+}
 
-const TaskApp = () => {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [modalVisible, setModalVisible] = useState(false);
+const AddTaskModal = (props: AddTaskModalProps) => {
+  const { clickAdd, setModalVisible } = props;
   const [taskName, setTaskName] = useState('');
 
   const addTask = () => {
     if (!taskName.trim()) {
       return; // 如果输入为空则不添加
     }
-
-    const newTask: Task = {
-      id: Date.now().toString(),
-      name: taskName,
-      createdAt: new Date().toISOString(),
-    };
-
-    setTasks([...tasks, newTask]);
+    clickAdd(taskName);
     setTaskName('');
-    setModalVisible(false);
     Keyboard.dismiss(); // 关闭键盘
   };
 
@@ -51,7 +41,7 @@ const TaskApp = () => {
             value={taskName}
             onChangeText={setTaskName}
             autoFocus={true}
-            onSubmitEditing={addTask} // 键盘回车提交
+            // onSubmitEditing={addTask} // 键盘回车提交
             returnKeyType="done"
           />
           <TouchableOpacity
@@ -140,4 +130,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default TaskApp;
+export default AddTaskModal;

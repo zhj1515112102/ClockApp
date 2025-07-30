@@ -17,6 +17,8 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import { CompletedItem, SignInItem } from './types';
 import { mockData } from './mock';
 import { cloneDeep } from 'lodash';
+import AddTaskModal from './AddTaskModal';
+import { v4 as uuidv4 } from 'uuid';
 
 const STORAGE_KEYS = {
   SIGN_IN_ITEMS: 'signInItems',
@@ -28,7 +30,6 @@ const { height: screenHeight } = Dimensions.get('window');
 const Home: React.FC<any> = props => {
   const [signInItems, setSignInItems] = useState<SignInItem[]>([]);
   const [completedItems, setCompletedItems] = useState<CompletedItem[]>([]);
-  const [newItemName, setNewItemName] = useState<string>('');
   const [modalVisible, setModalVisible] = useState<boolean>(false);
 
   // 加载本地存储的数据
@@ -62,58 +63,33 @@ const Home: React.FC<any> = props => {
     }
   };
 
-  const addSignInItem = (): void => {
-    if (!newItemName.trim()) {
-      Alert.alert('提示', '请输入签到项名称');
-      return;
-    }
-
+  const addSignInItem = (taskName: string): void => {
     const newItem: SignInItem = {
-      id: Date.now().toString(),
-      name: newItemName.trim(),
+      id: uuidv4(),
+      name: taskName.trim(),
       createdAt: new Date().toISOString(),
     };
 
     const updatedItems = [...signInItems, newItem];
     setSignInItems(updatedItems);
     saveData(STORAGE_KEYS.SIGN_IN_ITEMS, updatedItems);
-    setNewItemName('');
+    setModalVisible(false);
   };
 
   const completeSignInItem = (item: SignInItem): void => {
-    Alert.alert(
-      '完成任务', // 标题
-      '您确定要完成此任务吗？', // 内容
-      [
-        {
-          text: '取消',
-          onPress: () => console.log('取消操作'),
-          style: 'cancel',
-        },
-        {
-          text: '确认',
-          onPress: () => {
-            console.log('确认操作');
-            const newCompletedItem: CompletedItem = {
-              ...item,
-              completedAt: new Date().toISOString(),
-            };
+    const newCompletedItem: CompletedItem = {
+      ...item,
+      completedAt: new Date().toISOString(),
+    };
 
-            const updatedCompletedItems = [...completedItems, newCompletedItem];
-            setCompletedItems(updatedCompletedItems);
-            saveData(STORAGE_KEYS.COMPLETED_ITEMS, updatedCompletedItems);
+    const updatedCompletedItems = [...completedItems, newCompletedItem];
+    setCompletedItems(updatedCompletedItems);
+    saveData(STORAGE_KEYS.COMPLETED_ITEMS, updatedCompletedItems);
 
-            // 从签到项中移除
-            const updatedSignInItems = signInItems.filter(
-              i => i.id !== item.id,
-            );
-            setSignInItems(updatedSignInItems);
-            saveData(STORAGE_KEYS.SIGN_IN_ITEMS, updatedSignInItems);
-          },
-        },
-      ],
-      { cancelable: false }, // 点击外部不关闭
-    );
+    // 从签到项中移除
+    const updatedSignInItems = signInItems.filter(i => i.id !== item.id);
+    setSignInItems(updatedSignInItems);
+    saveData(STORAGE_KEYS.SIGN_IN_ITEMS, updatedSignInItems);
   };
 
   const deleteItem = (itemId: string, isCompleted: boolean) => {
@@ -193,17 +169,7 @@ const Home: React.FC<any> = props => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>我的任务</Text>
-      {/* <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="输入新的签到项"
-          value={newItemName}
-          onChangeText={setNewItemName}
-        />
-        <TouchableOpacity style={styles.addButton} onPress={addSignInItem}>
-          <Icon name="plus" size={20} color="#FFF" />
-        </TouchableOpacity>
-      </View> */}
+      {/* 待完成 */}
       <View style={styles.signInTitle}>
         <Text style={styles.sectionTitle}>待完成 ({signInItems.length})</Text>
         <TouchableOpacity
@@ -224,14 +190,20 @@ const Home: React.FC<any> = props => {
           }
         />
       </View>
+      {/* 已完成 */}
       <Text style={styles.sectionTitle}>已完成 ({completedItems.length})</Text>
-      <FlatList
-        data={completedItems}
-        renderItem={renderCompletedItem}
-        keyExtractor={item => item.id}
-        style={{ height: 'auto' }}
-        ListEmptyComponent={<Text style={styles.emptyText}>暂无已完成项</Text>}
-      />
+      <View style={{ maxHeight: screenHeight * 0.5 }}>
+        <FlatList
+          data={completedItems}
+          renderItem={renderCompletedItem}
+          keyExtractor={item => item.id}
+          style={{ flexGrow: 0 }}
+          ListEmptyComponent={
+            <Text style={styles.emptyText}>暂无已完成项</Text>
+          }
+        />
+      </View>
+
       <Modal
         animationType="slide"
         transparent={true}
@@ -241,49 +213,10 @@ const Home: React.FC<any> = props => {
           Keyboard.dismiss();
         }}
       >
-        <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>添加新任务</Text>
-
-            {/* 任务名称输入框 */}
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
-                placeholder="输入任务名称"
-                // value={taskName}
-                // onChangeText={setTaskName}
-                autoFocus={true}
-                // onSubmitEditing={addTask} // 键盘回车提交
-                returnKeyType="done"
-              />
-              <TouchableOpacity
-              // style={styles.submitButton}
-              // onPress={addTask}
-              // disabled={!taskName.trim()}
-              >
-                <Text
-                  style={[
-                    styles.submitButtonText,
-                    // !taskName.trim() && styles.disabledButton,
-                  ]}
-                >
-                  添加
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* 取消按钮 */}
-            <TouchableOpacity
-              style={styles.cancelButton}
-              onPress={() => {
-                setModalVisible(false);
-                Keyboard.dismiss();
-              }}
-            >
-              <Text style={styles.cancelButtonText}>取消</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+        <AddTaskModal
+          setModalVisible={setModalVisible}
+          clickAdd={addSignInItem}
+        />
       </Modal>
     </View>
   );
@@ -374,46 +307,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#999',
     marginVertical: 20,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
-  },
-  modalContent: {
-    width: '90%',
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 20,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  submitButton: {
-    backgroundColor: '#4CAF50',
-    borderRadius: 5,
-    padding: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    minWidth: 60,
-  },
-  submitButtonText: {
-    // color: 'white',
-    fontWeight: 'bold',
-  },
-  disabledButton: {
-    opacity: 0.5,
-  },
-  cancelButton: {
-    padding: 10,
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    color: '#F44336',
   },
 });
 
