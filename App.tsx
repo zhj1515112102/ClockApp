@@ -33,38 +33,44 @@ function App() {
   const isDarkMode = useColorScheme() === 'dark';
 
   return (
-    <NavigationContainer>
-      <Tab.Navigator
-        screenOptions={({ route }) => ({
-          tabBarIcon: ({ focused, color, size }) => {
-            let iconName = '';
+    <View style={styles.container}>
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+      <View style={[styles.container, { paddingTop: statusBarHeightOffset }]}>
+        <NavigationContainer>
+          <Tab.Navigator
+            screenOptions={({ route }) => ({
+              tabBarIcon: ({ focused, color, size }) => {
+                let iconName = '';
 
-            if (route.name === 'Home') {
-              iconName = focused ? 'home' : 'home-outline';
-            } else if (route.name === 'Profile') {
-              iconName = focused ? 'person' : 'person-outline';
-            }
+                if (route.name === 'Home') {
+                  iconName = focused ? 'home' : 'home-outline';
+                } else if (route.name === 'Profile') {
+                  iconName = focused ? 'person' : 'person-outline';
+                }
 
-            return <Ionicons name={iconName} size={size} color={color} />;
-          },
-          tabBarActiveTintColor: 'tomato',
-          tabBarInactiveTintColor: 'gray',
-        })}
-      >
-        <Tab.Screen name="Home" component={Home} options={{ title: '首页' }} />
-        <Tab.Screen
-          name="Profile"
-          component={ProfileScreen}
-          options={{ title: '我的' }}
-        />
-      </Tab.Navigator>
-      {/* <View style={styles.container}>
-        <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-        <View style={[styles.container, { paddingTop: statusBarHeightOffset }]}>
-          <Home />
-        </View>
-      </View> */}
-    </NavigationContainer>
+                return <Ionicons name={iconName} size={size} color={color} />;
+              },
+              tabBarActiveTintColor: 'tomato',
+              tabBarInactiveTintColor: 'gray',
+            })}
+          >
+            <Tab.Screen
+              name="Home"
+              component={Home}
+              options={{
+                title: '我的任务',
+                headerShown: false,
+              }}
+            />
+            <Tab.Screen
+              name="Profile"
+              component={ProfileScreen}
+              options={{ title: '我的', headerShown: false }}
+            />
+          </Tab.Navigator>
+        </NavigationContainer>
+      </View>
+    </View>
   );
 }
 

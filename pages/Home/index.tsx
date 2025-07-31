@@ -18,12 +18,16 @@ import { CompletedItem, SignInItem } from './types';
 import { mockData } from './mock';
 import { cloneDeep } from 'lodash';
 import AddTaskModal from './AddTaskModal';
-import { v4 as uuidv4 } from 'uuid';
+import uuid from 'react-native-uuid';
+import { filterUncompletedItems } from './utils';
 
 const STORAGE_KEYS = {
+  BASE_ITEMS: 'baseItems',
   SIGN_IN_ITEMS: 'signInItems',
   COMPLETED_ITEMS: 'completedItems',
 } as const;
+
+const uuidv4 = uuid.v4;
 
 const { height: screenHeight } = Dimensions.get('window');
 
@@ -34,24 +38,29 @@ const Home: React.FC<any> = props => {
 
   // 加载本地存储的数据
   useEffect(() => {
-    AsyncStorage.setItem(STORAGE_KEYS.SIGN_IN_ITEMS, JSON.stringify(mockData));
+    // AsyncStorage.setItem(STORAGE_KEYS.SIGN_IN_ITEMS, JSON.stringify(mockData));
     loadData();
   }, []);
 
-  const loadData = async () => {
+  const readStorage = async (key: string, defaultValue: SignInItem[] = []) => {
     try {
-      const [items, completed] = await Promise.all([
-        AsyncStorage.getItem(STORAGE_KEYS.SIGN_IN_ITEMS),
-        AsyncStorage.getItem(STORAGE_KEYS.COMPLETED_ITEMS),
-      ]);
-      console.log('加载数据:', items, completed);
-
-      if (items) setSignInItems(JSON.parse(items));
-      if (completed) setCompletedItems(JSON.parse(completed));
+      const data = await AsyncStorage.getItem(key);
+      return data ? JSON.parse(data) : defaultValue;
     } catch (error) {
       console.error('加载数据失败:', error);
-      Alert.alert('错误', '加载数据失败');
+      return defaultValue;
     }
+  };
+
+  const loadData = async () => {
+    const [baseItems, items, completed] = await Promise.all([
+      readStorage(STORAGE_KEYS.BASE_ITEMS),
+      readStorage(STORAGE_KEYS.SIGN_IN_ITEMS),
+      readStorage(STORAGE_KEYS.COMPLETED_ITEMS),
+    ]);
+    console.log('加载数据:', baseItems, items, completed);
+    setSignInItems(filterUncompletedItems(baseItems, items, completed));
+    setCompletedItems(completed);
   };
 
   const saveData = async <T,>(key: string, data: T): Promise<void> => {
