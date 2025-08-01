@@ -14,52 +14,44 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/FontAwesome';
-import { CompletedItem, SignInItem } from './types';
 import { mockData } from './mock';
 import { cloneDeep } from 'lodash';
 import AddTaskModal from './AddTaskModal';
 import uuid from 'react-native-uuid';
 import { filterUncompletedItems } from './utils';
-
-const STORAGE_KEYS = {
-  BASE_ITEMS: 'baseItems',
-  SIGN_IN_ITEMS: 'signInItems',
-  COMPLETED_ITEMS: 'completedItems',
-} as const;
+import RNFS from 'react-native-fs';
+import { loadBasicTasks } from '../utils/basicTasks';
+import { TaskItem } from '../types/task';
+import { readStorageTask } from '../utils';
+import { STORAGE_KEYS } from '../utils/constants';
 
 const uuidv4 = uuid.v4;
 
 const { height: screenHeight } = Dimensions.get('window');
 
 const Home: React.FC<any> = props => {
-  const [signInItems, setSignInItems] = useState<SignInItem[]>([]);
-  const [completedItems, setCompletedItems] = useState<CompletedItem[]>([]);
+  const [signInItems, setSignInItems] = useState<TaskItem[]>([]);
+  const [completedItems, setCompletedItems] = useState<TaskItem[]>([]);
   const [modalVisible, setModalVisible] = useState<boolean>(false);
 
   // 加载本地存储的数据
   useEffect(() => {
     // AsyncStorage.setItem(STORAGE_KEYS.SIGN_IN_ITEMS, JSON.stringify(mockData));
+    console.log(
+      'xxxxxx DocumentDirectoryPath',
+      `${RNFS.DocumentDirectoryPath}/task_records`,
+    );
     loadData();
   }, []);
 
-  const readStorage = async (key: string, defaultValue: SignInItem[] = []) => {
-    try {
-      const data = await AsyncStorage.getItem(key);
-      return data ? JSON.parse(data) : defaultValue;
-    } catch (error) {
-      console.error('加载数据失败:', error);
-      return defaultValue;
-    }
-  };
-
   const loadData = async () => {
-    const [baseItems, items, completed] = await Promise.all([
-      readStorage(STORAGE_KEYS.BASE_ITEMS),
-      readStorage(STORAGE_KEYS.SIGN_IN_ITEMS),
-      readStorage(STORAGE_KEYS.COMPLETED_ITEMS),
+    const [items, completed] = await Promise.all([
+      readStorageTask(STORAGE_KEYS.SIGN_IN_ITEMS),
+      readStorageTask(STORAGE_KEYS.COMPLETED_ITEMS),
     ]);
-    console.log('加载数据:', baseItems, items, completed);
-    setSignInItems(filterUncompletedItems(baseItems, items, completed));
+
+    console.log('加载数据:', items, completed);
+    setSignInItems(filterUncompletedItems(items, completed));
     setCompletedItems(completed);
   };
 
@@ -72,10 +64,11 @@ const Home: React.FC<any> = props => {
     }
   };
 
-  const addSignInItem = (taskName: string): void => {
-    const newItem: SignInItem = {
+  const addSignInItem = (taskName: string, category: string): void => {
+    const newItem: TaskItem = {
       id: uuidv4(),
       name: taskName.trim(),
+      category: category || '默认分类',
       createdAt: new Date().toISOString(),
     };
 
@@ -85,8 +78,8 @@ const Home: React.FC<any> = props => {
     setModalVisible(false);
   };
 
-  const completeSignInItem = (item: SignInItem): void => {
-    const newCompletedItem: CompletedItem = {
+  const completeSignInItem = (item: TaskItem): void => {
+    const newCompletedItem: TaskItem = {
       ...item,
       completedAt: new Date().toISOString(),
     };
@@ -144,7 +137,7 @@ const Home: React.FC<any> = props => {
     );
   };
 
-  const renderSignInItem = ({ item }: { item: SignInItem }) => (
+  const renderSignInItem = ({ item }: { item: TaskItem }) => (
     <View style={styles.itemContainer}>
       <Text style={styles.itemText}>{item.name}</Text>
       <View style={styles.itemActions}>
@@ -163,11 +156,11 @@ const Home: React.FC<any> = props => {
     </View>
   );
 
-  const renderCompletedItem = ({ item }: { item: CompletedItem }) => (
+  const renderCompletedItem = ({ item }: { item: TaskItem }) => (
     <View style={[styles.itemContainer, styles.completedItem]}>
       <Text style={styles.itemText}>{item.name}</Text>
       <Text style={styles.completedTime}>
-        {new Date(item.completedAt).toLocaleString()}
+        {new Date(item.completedAt || '').toLocaleString()}
       </Text>
       <TouchableOpacity onPress={() => deleteItem(item.id, true)}>
         <Icon name="times-circle" size={24} color="#F44336" />

@@ -20,6 +20,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import ProfileScreen from './pages/Profile';
+import { initCurrentTaskData } from './pages/utils/currentTask';
 
 const statusBarHeightOffset = Platform.select({
   android: StatusBar.currentHeight || 0,
@@ -31,6 +32,8 @@ const Tab = createBottomTabNavigator();
 function App() {
   //
   const isDarkMode = useColorScheme() === 'dark';
+
+  initCurrentTaskData();
 
   return (
     <View style={styles.container}>

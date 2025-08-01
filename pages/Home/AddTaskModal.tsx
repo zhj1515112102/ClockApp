@@ -12,18 +12,19 @@ import {
 
 interface AddTaskModalProps {
   setModalVisible: React.Dispatch<React.SetStateAction<boolean>>;
-  clickAdd: (taskName: string) => void;
+  clickAdd: (taskName: string, category: string) => void;
 }
 
 const AddTaskModal = (props: AddTaskModalProps) => {
   const { clickAdd, setModalVisible } = props;
   const [taskName, setTaskName] = useState('');
+  const [category, setCategory] = useState(''); // 新增分类状态
 
   const addTask = () => {
     if (!taskName.trim()) {
       return; // 如果输入为空则不添加
     }
-    clickAdd(taskName);
+    clickAdd(taskName, category);
     setTaskName('');
     Keyboard.dismiss(); // 关闭键盘
   };
@@ -41,6 +42,15 @@ const AddTaskModal = (props: AddTaskModalProps) => {
             value={taskName}
             onChangeText={setTaskName}
             autoFocus={true}
+            // onSubmitEditing={addTask} // 键盘回车提交
+            returnKeyType="done"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="输入任务类别"
+            value={category}
+            onChangeText={setCategory}
+            autoFocus={false}
             // onSubmitEditing={addTask} // 键盘回车提交
             returnKeyType="done"
           />

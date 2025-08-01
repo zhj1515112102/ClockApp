@@ -1,12 +1,11 @@
-import { SignInItem } from './types';
+import { TaskItem } from '../types/task';
 
 export const filterUncompletedItems = (
-  baseItems: SignInItem[],
-  items: SignInItem[],
-  completed: SignInItem[],
-): SignInItem[] => {
+  items: TaskItem[],
+  completed: TaskItem[],
+): TaskItem[] => {
   // 合并 baseItems 和 items（去重）
-  const allItems = [...baseItems, ...items].filter(
+  const allItems = items.filter(
     (item, index, self) => index === self.findIndex(t => t.id === item.id),
   );
 
